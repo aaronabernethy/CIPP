@@ -15,9 +15,10 @@ description: Configuring the Halo PSA Ticketing integration
 6. Set the **Authentication Method** to _Client ID and Secret (Services)_.
 7. Store the **Client ID** and **Client Secret** securely.
 8. Set the **Login Type** and **Agent to login as** appropriately.\
-   This setting will determine who appears to be responsible for these API calls. You may want to create a dedicated agent user for this purpose._ _This agent needs to be an administrator in Halo, other roles maybe possible but have not been tested_
-9. Select the **Permissions** tab.
-10. Grant the application the permissions required for your purposes.\
+   This setting will determine who appears to be responsible for these API calls. You may want to create a dedicated agent user for this purpose._ _This agent needs to be an administrator in Halo, other roles maybe possible but have not been tested_\
+   Agent permissions must include Tickets Access Level - Read and Modify, Clients Access Level - Read and Modify, and Can add new Tickets - Yes
+10. Select the **Permissions** tab.
+11. Grant the application the permissions required for your purposes.\
     Generally speaking you want to limit the API to only the permissions it needs. For CIPP this currently requires read:tickets, edit:tickets, read:customers, edit:customers._
 
 #### Configure the HaloPSA Integration in CIPP
