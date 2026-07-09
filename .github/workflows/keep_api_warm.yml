@@ -1,0 +1,52 @@
+---
+name: Keep CIPP API Warm
+
+# Pings the CIPP API's public keep-alive endpoint every 5 minutes so the
+# PowerShell Function App never goes cold. Cold starts are what cause the
+# long "Logging into CIPP" splash screen after periods of inactivity.
+#
+# The /api/PublicPing endpoint is anonymous by design (see
+# staticwebapp.config.json route "/api/Public*") and purpose-built for
+# keep-alive traffic, so no secrets are required.
+#
+# Note: GitHub disables scheduled workflows after 60 days without repo
+# activity. If pings stop, re-enable this workflow from the Actions tab.
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: keep-api-warm
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    if: github.repository_owner == 'aaronabernethy'
+    name: Ping CIPP API
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    steps:
+      - name: Ping /api/PublicPing
+        run: |
+          RESPONSE=$(curl -sS --max-time 180 --retry 2 --retry-delay 5 \
+            -w '\n%{http_code} %{time_total}' \
+            "https://cipp.mac-sys.com/api/PublicPing")
+          BODY=$(echo "$RESPONSE" | head -n -1)
+          STATS=$(echo "$RESPONSE" | tail -n 1)
+          HTTP_CODE=$(echo "$STATS" | cut -d' ' -f1)
+          TIME_TOTAL=$(echo "$STATS" | cut -d' ' -f2)
+
+          echo "HTTP ${HTTP_CODE} in ${TIME_TOTAL}s"
+          echo "$BODY"
+
+          if [ "$HTTP_CODE" != "200" ]; then
+            echo "::error::CIPP API keep-alive ping failed with HTTP ${HTTP_CODE}. The API backend may be unreachable or the Static Web App backend link may be broken."
+            exit 1
+          fi
+
+          if ! echo "$BODY" | grep -q "Pong"; then
+            echo "::error::CIPP API responded HTTP 200 but without the expected 'Pong' payload."
+            exit 1
+          fi
